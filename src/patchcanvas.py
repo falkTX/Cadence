@@ -2480,16 +2480,16 @@ class CanvasBox(QGraphicsItem):
         else:
             painter.setBrush(canvas.theme.box_bg_1)
 
-        painter.drawRect(0, 0, self.p_width, self.p_height)
+        painter.drawRect(QRectF(0, 0, self.p_width, self.p_height))
 
         # Draw pixmap header
         if canvas.theme.box_header_pixmap:
             painter.setPen(Qt.NoPen)
             painter.setBrush(canvas.theme.box_bg_2)
-            painter.drawRect(1, 1, self.p_width-2, canvas.theme.box_header_height)
+            painter.drawRect(QRectF(1, 1, self.p_width-2, canvas.theme.box_header_height))
 
             headerPos  = QPointF(1, 1)
-            headerRect = QRectF(2, 2, self.p_width-4, canvas.theme.box_header_height-3)
+            headerRect = QRectF(2, 2, int(self.p_width-4), canvas.theme.box_header_height-3)
             painter.drawTiledPixmap(headerRect, canvas.theme.box_header_pixmap, headerPos)
 
         # Draw text

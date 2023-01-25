@@ -56,8 +56,8 @@ class CanvasPreviewFrame(QFrame):
         self.fScale = 1.0
         self.fScene = None
         self.fRealParent = None
-        self.fFakeWidth  = 0.0
-        self.fFakeHeight = 0.0
+        self.fFakeWidth  = 0
+        self.fFakeHeight = 0
 
         self.fRenderSource = self.getRenderSource()
         self.fRenderTarget = QRectF(0, 0, 0, 0)
@@ -70,8 +70,8 @@ class CanvasPreviewFrame(QFrame):
         padding = 6
 
         self.fScene = scene
-        self.fFakeWidth  = float(realWidth) / 15
-        self.fFakeHeight = float(realHeight) / 15
+        self.fFakeWidth  = int(realWidth / 15)
+        self.fFakeHeight = int(realHeight / 15)
 
         self.setMinimumSize(self.fFakeWidth+padding,   self.fFakeHeight+padding)
         self.setMaximumSize(self.fFakeWidth*4+padding, self.fFakeHeight+padding)
@@ -166,6 +166,9 @@ class CanvasPreviewFrame(QFrame):
         QFrame.mouseReleaseEvent(self, event)
 
     def paintEvent(self, event):
+        if not self.fUseCustomPaint:
+            QFrame.paintEvent(self, event)
+
         painter = QPainter(self)
 
         if self.fUseCustomPaint:
@@ -198,12 +201,7 @@ class CanvasPreviewFrame(QFrame):
 
         painter.setBrush(self.fViewBrush)
         painter.setPen(self.fViewPen)
-        painter.drawRect(self.fViewRect[iX], self.fViewRect[iY], maxWidth, maxHeight)
-
-        if self.fUseCustomPaint:
-            event.accept()
-        else:
-            QFrame.paintEvent(self, event)
+        painter.drawRect(QRectF(self.fViewRect[iX], self.fViewRect[iY], maxWidth, maxHeight))
 
     def resizeEvent(self, event):
         self.fRenderSource = self.getRenderSource()
