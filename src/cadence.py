@@ -326,6 +326,12 @@ def get_windows_information():
 
     return (os, version)
 
+def get_freebsd_information():
+    os      = "FreeBSD"
+    version = getoutput("sysctl -n kern.osrelease")
+
+    return (os, version)
+
 # ---------------------------------------------------------------------
 
 def isAlsaAudioBridged():
@@ -779,6 +785,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             info = get_mac_information()
         elif WINDOWS:
             info = get_windows_information()
+        elif FREEBSD:
+            info = get_freebsd_information()
         else:
             info = ("Unknown", "Unknown")
 
