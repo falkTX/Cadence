@@ -5,8 +5,14 @@ It's being developed by falkTX, using Python3 and Qt5 (and some C++ where needed
 
 The tools share the same base source code, so most of them look quite similar (which is intentional). <br/>
 Also, lots of custom widgets were coded when needed (like pixmapdial, pixmapkeyboard, patchcanvas and systray). <br/>
-They can be re-used in other projects. Contact the author if you need help on that.
+They can be re-used in other projects.
 
+Cadence suite was abandoned by its original author in August 2023.
+
+Since August 2023, the Cadence suite is maintained by Nedko Arnaudov (LADI project),
+the author of jackdbus and ladish.
+
+In particular, fixes for CVE-2023-43782 and CVE-2023-43783 are applied.
 
 ===== DESCRIPTIONS =====
 ------------------------
