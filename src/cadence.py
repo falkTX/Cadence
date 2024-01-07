@@ -38,6 +38,7 @@ import ui_cadence_tb_alsa
 import ui_cadence_tb_a2j
 import ui_cadence_tb_pa
 import ui_cadence_rwait
+from shared import getDaemonLockfile
 from shared_cadence import *
 from shared_canvasjack import *
 from shared_settings import *
@@ -1710,7 +1711,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_AlsaBridgeStop(self):
-        checkFile = "/tmp/.cadence-aloop-daemon.x"
+        checkFile = self.getDaemonLockfile("cadence-aloop-daemon")
         if os.path.exists(checkFile):
             os.remove(checkFile)
 
