@@ -47,6 +47,8 @@ from shared_settings import *
 # Import getoutput
 
 from subprocess import getoutput
+import tempfile
+import subprocess
 
 # ------------------------------------------------------------------------------------------------------------
 # Try Import DBus
@@ -2095,11 +2097,10 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             REGFILE += '"Number of outputs"=dword:000000%s\n' % smartHex(self.sb_wineasio_outs.value(), 2)
             REGFILE += '"Preferred buffersize"=dword:0000%s\n' % smartHex(int(self.cb_wineasio_bsizes.currentText()), 4)
 
-            writeFile = open("/tmp/cadence-wineasio.reg", "w")
-            writeFile.write(REGFILE)
-            writeFile.close()
-
-            os.system("regedit /tmp/cadence-wineasio.reg")
+            with tempfile.NamedTemporaryFile('w') as tmpfile:
+                tmpfile.write(REGFILE)
+                tmpfile.flush()
+                subprocess.run(["regedit", tmpfile.name])
 
         self.settings_changed_types = []
         self.frame_tweaks_settings.setVisible(False)
