@@ -2,7 +2,10 @@
 # Makefile for Cadence #
 # ---------------------- #
 # Created by falkTX
-#
+# Modified (post 2023) by Nedko Arnaudov
+
+CODETREENAME="ladi-cadence"
+VERSION="1.9.4"
 
 PREFIX  = /usr/local
 DESTDIR =
@@ -223,3 +226,26 @@ uninstall:
 	rm -f $(X11_RC_DIR)/61cadence-session-inject
 	rm -f $(X11_RC_DIR)/70cadence-plugin-paths
 	rm -f $(X11_RC_DIR)/99cadence-session-start
+
+TARBALL_NAME := $(CODETREENAME)-$(VERSION)
+dist:
+	git clean -xfd
+	git describe --tags
+	rm -rvf $(TARBALL_NAME)
+	mkdir -v $(TARBALL_NAME)
+	cp -v AUTHORS.adoc $(TARBALL_NAME)
+	cp -v COPYING $(TARBALL_NAME)
+	cp -v INSTALL.md $(TARBALL_NAME)
+	cp -v MAINTAINERS.adoc $(TARBALL_NAME)
+	cp -v Makefile $(TARBALL_NAME)
+	cp -v NEWS.adoc $(TARBALL_NAME)
+	cp -v README.md $(TARBALL_NAME)
+#	cp -v TODO
+	cp -rv c++ $(TARBALL_NAME)
+	cp -rv data $(TARBALL_NAME)
+	cp -rv resources $(TARBALL_NAME)
+	cp -rv src $(TARBALL_NAME)
+	tar cJf $(TARBALL_NAME).tar.xz $(TARBALL_NAME)
+	gpg -b $(TARBALL_NAME).tar.xz
+	gpg --verify $(TARBALL_NAME).tar.xz.sig
+	rm -rvf $(TARBALL_NAME)

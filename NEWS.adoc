@@ -5,6 +5,7 @@
  * Add MAINTAINERS.adoc file
  * Remove vendored unzipfx code along with data/windows/
  * Adjust README.md ("is being developed by falktx" => "was developed by falktx")
+ * Makefile: Add dist target for tarball creation and gpg-signing
 
 == ladi-cadence-1.9.3: January 7, 55 (2024)
 
