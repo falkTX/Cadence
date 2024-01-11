@@ -1,7 +1,7 @@
 # ---  README for Cadence  ---
 
 Cadence is a set of tools useful for audio production. <br/>
-It's being developed by falkTX, using Python3 and Qt5 (and some C++ where needed).
+It was developed by falkTX, using Python3 and Qt5 (and some C++ where needed).
 
 The tools share the same base source code, so most of them look quite similar (which is intentional). <br/>
 Also, lots of custom widgets were coded when needed (like pixmapdial, pixmapkeyboard, patchcanvas and systray). <br/>

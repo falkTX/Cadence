@@ -1,0 +1,16 @@
+== ladi-cadence-1.9.4: January 11, 55 (2024)
+
+ * Add NEWS.adoc file
+ * Add AUTHORS.adoc file
+ * Add MAINTAINERS.adoc file
+ * Remove vendored unzipfx code along with data/windows/
+ * Adjust README.md ("is being developed by falktx" => "was developed by falktx")
+
+== ladi-cadence-1.9.3: January 7, 55 (2024)
+
+ * Switch default for /org/ladish/daemon/terminal to xterm (so to match ladish codebase defaults) Bug: https://github.com/falkTX/Cadence/issues/361 
+ * First LADI release, after falktx abandoned and archived the codebase
+ * README.md: Add info about new maintainer (LADI project, Nedko Arnaudov)
+ * Apply CVEs patches from SuSE, by Matthias Gerstner:
+ ** Patch CVE-2023-43782: Use of Fixed Temporary File Path in /tmp/.cadence-aloop-daemon.x
+ ** Patch CVE-2023-43783: Use of Fixed Temporary File Path in /tmp/cadence-wineasio.reg
