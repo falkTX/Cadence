@@ -47,7 +47,7 @@ After install, the app/tools will still work on distributions with python2 as de
 
 ===== RUNTIME DEPENDENCIES =====
 ----------------------------------
-All tools require Python3 and Qt5 (PyQt5), some of them work on Windows and Mac. <br/>
+All tools require Python3 and Qt5 (PyQt5). <br/>
 Here's the required run-time dependencies of each of the main tools:
 
 ### Cadence

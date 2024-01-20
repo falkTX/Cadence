@@ -85,7 +85,7 @@ sys.excepthook = sys_excepthook
 # ------------------------------------------------------------------------------------------------------------
 # Set Version
 
-VERSION = "0.9.2"
+VERSION = "1.9.4"
 
 # ------------------------------------------------------------------------------------------------------------
 # Set Debug mode
@@ -312,3 +312,11 @@ def setIcons(self_, modes):
     if "misc" in modes:
         gGui.ui.act_quit.setIcon(getIcon("application-exit"))
         gGui.ui.act_configure.setIcon(getIcon("configure"))
+
+def getDaemonLockfile(base):
+    lockdir = os.environ.get("XDG_RUNTIME_DIR", None)
+    if not lockdir:
+        lockdir = os.path.expanduser("~")
+
+    return os.path.join(lockdir, "{}-lock".format(base))
+

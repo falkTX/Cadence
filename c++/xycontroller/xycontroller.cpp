@@ -21,7 +21,7 @@
 # define nullptr (0)
 #endif
 
-#define VERSION "0.9.2"
+#define VERSION "1.9.4"
 
 #include "../jack_utils.hpp"
 #include "../midi_queue.hpp"
