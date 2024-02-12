@@ -34,6 +34,7 @@ else:
 import claudia_database as database
 import ui_claudia_launcher
 from shared import *
+from shared_i18n import *
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Carla)
@@ -1357,6 +1358,7 @@ if __name__ == '__main__':
     app.setApplicationVersion(VERSION)
     app.setOrganizationName("Cadence")
     app.setWindowIcon(QIcon(":/scalable/claudia-launcher.svg"))
+    setup_i18n()
 
     # Do not close on SIGUSR1
     signal(SIGUSR1, SIG_IGN)

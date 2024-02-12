@@ -42,6 +42,7 @@ import ui_catarina_connectports
 import ui_catarina_disconnectports
 from shared_canvasjack import *
 from shared_settings import *
+from shared_i18n import *
 
 # ------------------------------------------------------------------------------------------------------------
 # Try Import OpenGL
@@ -1307,6 +1308,7 @@ if __name__ == '__main__':
     app.setApplicationVersion(VERSION)
     app.setOrganizationName("Cadence")
     app.setWindowIcon(QIcon(":/scalable/catarina.svg"))
+    setup_i18n()
 
     # Show GUI
     gui = CatarinaMainW()

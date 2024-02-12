@@ -41,6 +41,7 @@ import ui_cadence_rwait
 from shared_cadence import *
 from shared_canvasjack import *
 from shared_settings import *
+from shared_i18n import *
 
 # ------------------------------------------------------------------------------------------------------------
 # Import getoutput
@@ -2362,6 +2363,7 @@ if __name__ == '__main__':
     app.setApplicationVersion(VERSION)
     app.setOrganizationName("Cadence")
     app.setWindowIcon(QIcon(":/scalable/cadence.svg"))
+    setup_i18n()
 
     if haveDBus:
         gDBus.loop = DBusMainLoop(set_as_default=True)

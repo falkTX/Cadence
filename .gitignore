@@ -29,6 +29,9 @@ ui_*.py
 src/resources_rc.py
 qrc_resources*.cpp
 
+# Translation files
+*.qm
+
 # Binaries
 c++/jackmeter/cadence-jackmeter
 c++/xycontroller/cadence-xycontroller
