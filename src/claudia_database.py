@@ -26,6 +26,8 @@ list_DAW = [
   # Package          AppName            Type              Binary              Icon                Template?     Level      (L, D, L, V, VST-Mode,  T, M, MIDI-Mode)      (doc-file,                                                         website)
   [ "ardour4",       "Ardour 4",        "DAW",            "ardour4",          "ardour",           TEMPLATE_NO,  LEVEL_JS,  (1, 0, 1, 1, "Native",  1, 1, "JACK"),        ("",                                                               "http://www.ardour.org/") ],
 
+  [ "ardour6",       "Ardour 6",        "DAW",            "ardour6",          "ardour",           TEMPLATE_NO,  LEVEL_JS,  (1, 0, 1, 1, "Native",  1, 1, "JACK"),        ("",                                                               "http://www.ardour.org/") ],
+  
   [ "ariamaestosa",  "Aria Maestosa",   "MIDI Sequencer", "Aria",             "aria",             TEMPLATE_NO,  LEVEL_0,   (0, 0, 0, 0, "",        0, 1, "ALSA | JACK"), ("",                                                               "http://ariamaestosa.sf.net/") ],
 
   [ "giada",         "Giada",           "Audio Looper",   "giada",            generic_audio_icon, TEMPLATE_NO,  LEVEL_0,   (0, 0, 0, 1, "Native",  0, 0, ""),            ("",                                                               "http://www.monocasual.com/giada/") ],
