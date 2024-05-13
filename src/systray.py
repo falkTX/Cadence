@@ -49,6 +49,8 @@ try:
 except:
     TrayEngine = "Qt"
 
+from shared_i18n import *
+
 print("Using Tray Engine '%s'" % TrayEngine)
 
 iActNameId = 0
@@ -680,6 +682,7 @@ if __name__ == '__main__':
             QDialog.closeEvent(self, event)
 
     app = QApplication(sys.argv)
+    setup_i18n()
     gui = ExampleGUI()
     gui.show()
     sys.exit(gui.systray.exec_(app))

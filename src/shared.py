@@ -43,27 +43,38 @@ if sys.platform == "darwin":
     LINUX   = False
     MACOS   = True
     WINDOWS = False
+    FREEBSD = False
 elif "haiku" in sys.platform:
     HAIKU   = True
     LINUX   = False
     MACOS   = False
     WINDOWS = False
+    FREEBSD = False
 elif "linux" in sys.platform:
     HAIKU   = False
     LINUX   = True
     MACOS   = False
     WINDOWS = False
+    FREEBSD = False
 elif sys.platform in ("win32", "win64", "cygwin"):
     WINDIR  = os.getenv("WINDIR")
     HAIKU   = False
     LINUX   = False
     MACOS   = False
     WINDOWS = True
+    FREEBSD = False
+elif sys.platform.startswith('freebsd'):
+    HAIKU   = False
+    LINUX   = False
+    MACOS   = False
+    WINDOWS = False
+    FREEBSD = True
 else:
     HAIKU   = False
     LINUX   = False
     MACOS   = False
     WINDOWS = False
+    FREEBSD = False
 
 # ------------------------------------------------------------------------------------------------------------
 # Try Import Signal
@@ -85,7 +96,7 @@ sys.excepthook = sys_excepthook
 # ------------------------------------------------------------------------------------------------------------
 # Set Version
 
-VERSION = "0.9.2"
+VERSION = "1.9.4"
 
 # ------------------------------------------------------------------------------------------------------------
 # Set Debug mode
@@ -312,3 +323,11 @@ def setIcons(self_, modes):
     if "misc" in modes:
         gGui.ui.act_quit.setIcon(getIcon("application-exit"))
         gGui.ui.act_configure.setIcon(getIcon("configure"))
+
+def getDaemonLockfile(base):
+    lockdir = os.environ.get("XDG_RUNTIME_DIR", None)
+    if not lockdir:
+        lockdir = os.path.expanduser("~")
+
+    return os.path.join(lockdir, "{}-lock".format(base))
+

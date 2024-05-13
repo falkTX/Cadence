@@ -137,10 +137,10 @@ def startSession(systemStarted, secondSystemStartAttempt):
 
     # PulseAudio
     if GlobalSettings.value("Pulse2JACK/AutoStart", True, type=bool):
-        if GlobalSettings.value("Pulse2JACK/PlaybackModeOnly", False, type=bool):
-            os.system("cadence-pulse2jack -p")
-        else:
-            os.system("cadence-pulse2jack")
+        inputs  = GlobalSettings.value("Pulse2JACK/CaptureChannels",  -1, type=int)
+        outputs = GlobalSettings.value("Pulse2JACK/PlaybackChannels", -1, type=int)
+
+        os.system("cadence-pulse2jack -c %s -p %s" % (str(inputs), str(outputs)))
 
     print("JACK Started Successfully")
     return True

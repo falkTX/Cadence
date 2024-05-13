@@ -42,16 +42,22 @@ import ui_claudia_projectproperties
 import ui_claudia_runcustom
 from shared_canvasjack import *
 from shared_settings import *
+from shared_i18n import *
 
 # ------------------------------------------------------------------------------------------------------------
 # Try Import DBus
 
 try:
     import dbus
-    from dbus.mainloop.pyqt5 import DBusQtMainLoop
+    from dbus.mainloop.pyqt5 import DBusMainLoop
     haveDBus = True
 except:
-    haveDBus = False
+    try:
+        # Try falling back to GMainLoop
+        from dbus.mainloop.glib import DBusGMainLoop as DBusMainLoop
+        haveDBus = True
+    except:
+        haveDBus = False
 
 # ------------------------------------------------------------------------------------------------------------
 # Try Import OpenGL
@@ -2740,15 +2746,16 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setApplicationName("Claudia")
     app.setApplicationVersion(VERSION)
-    app.setOrganizationName("Cadence")
+    app.setOrganizationName("LADI")
     app.setWindowIcon(QIcon(":/scalable/claudia.svg"))
+    setup_i18n()
 
     if not haveDBus:
         QMessageBox.critical(None, app.translate("ClaudiaMainW", "Error"), app.translate("ClaudiaMainW",
             "DBus is not available, Claudia cannot start without it!"))
         sys.exit(1)
 
-    gDBus.loop = DBusQtMainLoop(set_as_default=True)
+    gDBus.loop = DBusMainLoop(set_as_default=True)
     gDBus.bus  = dbus.SessionBus(mainloop=gDBus.loop)
     gDBus.jack = gDBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
     gDBus.ladish_control = gDBus.bus.get_object("org.ladish", "/org/ladish/Control")

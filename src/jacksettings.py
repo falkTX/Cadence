@@ -34,6 +34,7 @@ else:
 # Imports (Custom Stuff)
 
 import ui_settings_jack
+from shared_i18n import *
 
 # ------------------------------------------------------------------------------------------------------------
 # Try Import DBus
@@ -934,6 +935,7 @@ if __name__ == '__main__':
 
     # App initialization
     app = QApplication(sys_argv)
+    setup_i18n()
 
     # Connect to DBus
     if dbus:

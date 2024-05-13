@@ -22,6 +22,7 @@
 import ui_catia
 from shared_canvasjack import *
 from shared_settings import *
+from shared_i18n import *
 
 # ------------------------------------------------------------------------------------------------------------
 # Try Import DBus
@@ -737,7 +738,7 @@ class CatiaMainW(AbstractCanvasJackClass):
                 self.fGroupList.remove(group)
                 break
         else:
-            print("Catia - remove group failed")
+            print(self.tr("Catia - remove group failed"))
             return
 
         patchcanvas.removeGroup(groupId)
@@ -877,7 +878,7 @@ class CatiaMainW(AbstractCanvasJackClass):
                 break
 
         else:
-            print("Catia - connect jack ports failed")
+            print(self.tr("Catia - connect jack ports failed"))
             return -1
 
         return self.canvas_connectPorts(portOutId, portInId)
@@ -900,7 +901,7 @@ class CatiaMainW(AbstractCanvasJackClass):
                 portInId = port[iPortId]
 
         if portOutId == -1 or portInId == -1:
-            print("Catia - disconnect ports failed")
+            print(self.tr("Catia - disconnect ports failed"))
             return
 
         self.canvas_disconnectPorts(portOutId, portInId)
@@ -1384,6 +1385,7 @@ if __name__ == '__main__':
     app.setApplicationVersion(VERSION)
     app.setOrganizationName("Cadence")
     app.setWindowIcon(QIcon(":/scalable/catia.svg"))
+    setup_i18n()
 
     if jacklib is None:
         QMessageBox.critical(None, app.translate("CatiaMainW", "Error"), app.translate("CatiaMainW",

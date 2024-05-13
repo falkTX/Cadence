@@ -33,6 +33,7 @@ else:
 # Imports (Custom Stuff)
 
 import jacklib
+from shared import getDaemonLockfile
 
 # --------------------------------------------------
 # Auto re-activate if on good kernel
@@ -50,7 +51,7 @@ doRunNow  = True
 useZita   = False
 procIn    = QProcess()
 procOut   = QProcess()
-checkFile = "/tmp/.cadence-aloop-daemon.x"
+checkFile = getDaemonLockfile("cadence-aloop-daemon")
 
 # --------------------------------------------------
 # Global JACK variables
@@ -161,7 +162,7 @@ if __name__ == '__main__':
     client = jacklib.client_open("cadence-aloop-daemon", jacklib.JackUseExactName, None)
 
     if not client:
-        print("cadence-aloop-daemon is already running, delete \"/tmp/.cadence-aloop-daemon.x\" to close it")
+        print("cadence-aloop-daemon is already running, delete \"{}\" to close it".format(checkFile))
         quit()
 
     if jacklib.JACK2:

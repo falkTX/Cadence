@@ -1,0 +1,4 @@
+Cadence suite was developed by falkTX (Filipe Coelho)
+
+Since August 2023, the Cadence suite is maintained by Nedko Arnaudov (LADI project),
+the author of jackdbus and ladish. See MAINTAINERS.adoc file.

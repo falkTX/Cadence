@@ -33,6 +33,7 @@ else:
 
 import ui_logs
 from shared import *
+from shared_i18n import *
 
 # ------------------------------------------------------------------------------------------------------------
 # Fix log text output (get rid of terminal colors stuff)
@@ -451,6 +452,7 @@ if __name__ == '__main__':
     app.setApplicationVersion(VERSION)
     app.setOrganizationName("Cadence")
     app.setWindowIcon(QIcon(":/scalable/cadence.svg"))
+    setup_i18n()
 
     # Show GUI
     gui = LogsW(None)

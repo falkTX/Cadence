@@ -34,6 +34,7 @@ else:
 import claudia_database as database
 import ui_claudia_launcher
 from shared import *
+from shared_i18n import *
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Carla)
@@ -522,7 +523,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
     def clearInfo_DAW(self):
         self.ico_app_daw.setPixmap(self.getIcon("start-here").pixmap(48, 48))
-        self.label_name_daw.setText("App Name")
+        self.label_name_daw.setText(self.tr("App Name"))
         self.ico_ladspa_daw.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
         self.ico_dssi_daw.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
         self.ico_lv2_daw.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
@@ -536,7 +537,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
     def clearInfo_Host(self):
         self.ico_app_host.setPixmap(self.getIcon("start-here").pixmap(48, 48))
-        self.label_name_host.setText("App Name")
+        self.label_name_host.setText(self.tr("App Name"))
         self.ico_ladspa_host.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
         self.ico_dssi_host.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
         self.ico_lv2_host.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
@@ -549,7 +550,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
     def clearInfo_Intrument(self):
         self.ico_app_ins.setPixmap(self.getIcon("start-here").pixmap(48, 48))
-        self.label_name_ins.setText("App Name")
+        self.label_name_ins.setText(self.tr("App Name"))
         self.ico_builtin_fx_ins.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
         self.ico_audio_input_ins.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
         self.label_midi_mode_ins.setText("---")
@@ -559,7 +560,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
     def clearInfo_Bristol(self):
         self.ico_app_bristol.setPixmap(self.getIcon("start-here").pixmap(48, 48))
-        self.label_name_bristol.setText("App Name")
+        self.label_name_bristol.setText(self.tr("App Name"))
         self.ico_builtin_fx_bristol.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
         self.ico_audio_input_bristol.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
         self.label_midi_mode_bristol.setText("---")
@@ -569,7 +570,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
     def clearInfo_Plugin(self):
         self.ico_app_plugin.setPixmap(self.getIcon("lv2").pixmap(48, 48))
-        self.label_name_plugin.setText("Plugin Name")
+        self.label_name_plugin.setText(self.tr("Plugin Name"))
         self.label_plugin_audio_ins.setText("0")
         self.label_plugin_audio_outs.setText("0")
         self.label_plugin_midi_ins.setText("0")
@@ -581,7 +582,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
     def clearInfo_Effect(self):
         self.ico_app_effect.setPixmap(self.getIcon("start-here").pixmap(48, 48))
-        self.label_name_effect.setText("App Name")
+        self.label_name_effect.setText(self.tr("App Name"))
         self.ico_stereo_effect.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
         self.label_midi_mode_effect.setText("---")
         self.label_session_level_effect.setText(database.LEVEL_0)
@@ -590,7 +591,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
     def clearInfo_Tool(self):
         self.ico_app_tool.setPixmap(self.getIcon("start-here").pixmap(48, 48))
-        self.label_name_tool.setText("App Name")
+        self.label_name_tool.setText(self.tr("App Name"))
         self.label_midi_mode_tool.setText("---")
         self.label_session_level_tool.setText(database.LEVEL_0)
         self.frame_Tool.setEnabled(False)
@@ -699,9 +700,11 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             elif os.path.exists("/usr/bin/dpkg"):
                 pkg_out = getoutput("env LANG=C LC_ALL=C /usr/bin/dpkg --get-selections 2>/dev/null").split("\n")
                 for pkg_info in pkg_out:
-                    package, installed = pkg_info.rsplit("\t", 1)
-                    if installed == "install":
-                        pkglist.append(package.strip())
+                    pkg_info = pkg_info.strip()
+                    if pkg_info:
+                        package, installed = pkg_info.rsplit("\t", 1)
+                        if installed == "install":
+                            pkglist.append(package.strip())
 
             elif os.path.exists("/bin/rpm"):
                 pkg_out = getoutput("env LANG=C /bin/rpm -qa --qf \"%{NAME}\n\" 2>/dev/null").split("\n")
@@ -1355,8 +1358,9 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setApplicationName("Claudia-Launcher")
     app.setApplicationVersion(VERSION)
-    app.setOrganizationName("Cadence")
+    app.setOrganizationName("LADI")
     app.setWindowIcon(QIcon(":/scalable/claudia-launcher.svg"))
+    setup_i18n()
 
     # Do not close on SIGUSR1
     signal(SIGUSR1, SIG_IGN)

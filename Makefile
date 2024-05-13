@@ -2,7 +2,10 @@
 # Makefile for Cadence #
 # ---------------------- #
 # Created by falkTX
-#
+# Modified (post 2023) by Nedko Arnaudov
+
+CODETREENAME="ladi-cadence"
+VERSION="1.9.4"
 
 PREFIX  = /usr/local
 DESTDIR =
@@ -10,6 +13,8 @@ DESTDIR =
 LINK   = ln -s
 PYUIC ?= pyuic5
 PYRCC ?= pyrcc5
+PYLUPDATE ?= pylupdate5
+LRELEASE ?= lrelease
 
 # Detect X11 rules dir
 ifeq "$(wildcard /etc/X11/Xsession.d/ )" ""
@@ -19,8 +24,13 @@ else
 endif
 
 # -----------------------------------------------------------------------------------------------------------------------------------------
+# Internationalization
 
-all: CPP RES UI
+I18N_LANGUAGES :=
+
+# -----------------------------------------------------------------------------------------------------------------------------------------
+
+all: CPP RES UI locale
 
 # -----------------------------------------------------------------------------------------------------------------------------------------
 # C++ code
@@ -40,6 +50,13 @@ RES: src/resources_rc.py
 
 src/resources_rc.py: resources/resources.qrc
 	$(PYRCC) $< -o $@
+
+# -----------------------------------------------------------------------------------------------------------------------------------------
+# Translations
+locale: locale/cadence_en.qm locale/cadence_fr.qm
+	
+locale/%.qm: locale/%.ts
+	$(LRELEASE) $< -qm $@
 
 # -----------------------------------------------------------------------------------------------------------------------------------------
 # UI code
@@ -74,7 +91,7 @@ src/ui_%.py: resources/ui/%.ui
 clean:
 	$(MAKE) clean -C c++/jackmeter
 	$(MAKE) clean -C c++/xycontroller
-	rm -f *~ src/*~ src/*.pyc src/ui_*.py src/resources_rc.py
+	rm -f *~ src/*~ src/*.pyc src/ui_*.py src/resources_rc.py resources/locale/*.qm
 
 # -----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -99,6 +116,7 @@ install:
 	install -d $(DESTDIR)$(PREFIX)/share/cadence/pulse2loopback/
 	install -d $(DESTDIR)$(PREFIX)/share/cadence/icons/
 	install -d $(DESTDIR)$(PREFIX)/share/cadence/templates/
+	install -d $(DESTDIR)$(PREFIX)/share/cadence/locale/
 	install -d $(X11_RC_DIR)
 
 	# Install script files and binaries
@@ -161,6 +179,12 @@ install:
 	# Install main code
 	install -m 644 src/*.py $(DESTDIR)$(PREFIX)/share/cadence/src/
 
+	# Install translations
+	install -m 644 locale/*.qm $(DESTDIR)$(PREFIX)/share/cadence/locale/
+
+	# compile python files
+	python3 -m compileall $(DESTDIR)$(PREFIX)/share/cadence/src/
+	
 	# Install addtional stuff for Cadence
 	install -m 644 data/pulse2jack/*     $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
 	install -m 644 data/pulse2loopback/* $(DESTDIR)$(PREFIX)/share/cadence/pulse2loopback/
@@ -223,3 +247,26 @@ uninstall:
 	rm -f $(X11_RC_DIR)/61cadence-session-inject
 	rm -f $(X11_RC_DIR)/70cadence-plugin-paths
 	rm -f $(X11_RC_DIR)/99cadence-session-start
+
+TARBALL_NAME := $(CODETREENAME)-$(VERSION)
+dist:
+	git clean -xfd
+	git describe --tags
+	rm -rvf $(TARBALL_NAME)
+	mkdir -v $(TARBALL_NAME)
+	cp -v AUTHORS.adoc $(TARBALL_NAME)
+	cp -v COPYING $(TARBALL_NAME)
+	cp -v INSTALL.md $(TARBALL_NAME)
+	cp -v MAINTAINERS.adoc $(TARBALL_NAME)
+	cp -v Makefile $(TARBALL_NAME)
+	cp -v NEWS.adoc $(TARBALL_NAME)
+	cp -v README.md $(TARBALL_NAME)
+#	cp -v TODO
+	cp -rv c++ $(TARBALL_NAME)
+	cp -rv data $(TARBALL_NAME)
+	cp -rv resources $(TARBALL_NAME)
+	cp -rv src $(TARBALL_NAME)
+	tar cJf $(TARBALL_NAME).tar.xz $(TARBALL_NAME)
+	gpg -b $(TARBALL_NAME).tar.xz
+	gpg --verify $(TARBALL_NAME).tar.xz.sig
+	rm -rvf $(TARBALL_NAME)

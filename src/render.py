@@ -33,6 +33,7 @@ else:
 
 import ui_render
 from shared import *
+from shared_i18n import *
 from jacklib_helpers import *
 
 # ------------------------------------------------------------------------------------------------------------
@@ -239,7 +240,7 @@ class RenderW(QDialog):
         os.chdir(self.ui.le_folder.text())
 
         if newBufferSize != int(jacklib.get_buffer_size(self.fJackClient)):
-            print("NOTICE: buffer size changed before render")
+            print(self.tr("NOTICE: buffer size changed before render"))
             jacklib.set_buffer_size(self.fJackClient, newBufferSize)
 
         if useTransport:
@@ -252,7 +253,7 @@ class RenderW(QDialog):
         self.fProcess.waitForStarted()
 
         if self.fFreewheel:
-            print("NOTICE: rendering in freewheel mode")
+            print(self.tr("NOTICE: rendering in freewheel mode"))
             sleep(1)
             jacklib.set_freewheel(self.fJackClient, 1)
 
@@ -442,6 +443,7 @@ if __name__ == '__main__':
     app.setApplicationVersion(VERSION)
     app.setOrganizationName("Cadence")
     app.setWindowIcon(QIcon(":/scalable/cadence.svg"))
+    setup_i18n()
 
     if jacklib is None:
         QMessageBox.critical(None, app.translate("RenderW", "Error"), app.translate("RenderW",

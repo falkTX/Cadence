@@ -16,17 +16,10 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
-# ------------------------------------------------------------------------------------------------------------
-# Imports (Global)
-
-if True:
-    from PyQt5.QtCore import pyqtSlot, QTimer
-    from PyQt5.QtGui import QCursor, QFontMetrics, QImage, QPainter
-    from PyQt5.QtWidgets import QMainWindow, QMenu
-else:
-    from PyQt4.QtCore import pyqtSlot, QTimer
-    from PyQt4.QtGui import QCursor, QFontMetrics, QImage, QPainter
-    from PyQt4.QtGui import QMainWindow, QMenu
+from PyQt5.QtCore import pyqtSlot, QTimer
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtGui import QCursor, QFontMetrics, QImage, QPainter
+from PyQt5.QtWidgets import QMainWindow, QMenu
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
@@ -156,7 +149,7 @@ class AbstractCanvasJackClass(QMainWindow):
             failed = bool(jacksettings.setBufferSize(bufferSize))
 
         if failed:
-            print("Failed to change buffer-size as %i, reset to %i" % (bufferSize, self.fBufferSize))
+            print(self.tr("Failed to change buffer-size as %i, reset to %i") % (bufferSize, self.fBufferSize))
             self.ui_setBufferSize(self.fBufferSize, True)
 
     def jack_setSampleRate(self, sampleRate):
